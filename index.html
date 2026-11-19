@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Split Loot</title>
+<meta name="description" content="Calculadora de divisão de loot para party hunts no Tibia: cole o Party Hunt Analyzer, ajuste os valores e copie os comandos de transferência prontos.">
+<meta name="theme-color" content="#0f141b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Split Loot – divisão de loot do Tibia">
+<meta property="og:description" content="Calculadora de divisão de loot para party hunts no Tibia: cole o Party Hunt Analyzer, ajuste os valores e copie os comandos de transferência prontos.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='g' cx='.35' cy='.3' r='.8'%3E%3Cstop offset='0' stop-color='%23fbe39a'/%3E%3Cstop offset='.45' stop-color='%23e3b54f'/%3E%3Cstop offset='1' stop-color='%23a97e22'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='32' cy='32' r='29' fill='url(%23g)' stroke='%232b2210' stroke-width='4'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-family='Georgia,serif' font-weight='700' font-size='30' fill='%234a3608'%3E%24%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0f141b;
+    --bg-2: #141b24;
+    --surface: #18212c;
+    --surface-2: #1e2935;
+    --line: #2a3747;
+    --line-soft: #223040;
+    --text: #ece6d6;
+    --muted: #8d97a5;
+    --gold: #e3b54f;
+    --gold-deep: #a97e22;
+    --pay: #e46a74;
+    --recv: #4fc7a6;
+    --even: #8d97a5;
+    --radius-lg: 14px;
+    --radius: 9px;
+    --radius-sm: 6px;
+    --font-display: "Cinzel", "Trajan Pro", Georgia, serif;
+    --font-body: "Barlow", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(1200px 500px at 85% -10%, rgba(227,181,79,.08), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .num { font-variant-numeric: tabular-nums; }
+  button, input, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 28px 20px 64px; }
+
+  /* Header */
+  .top { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: 26px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .coin {
+    width: 46px; height: 46px; border-radius: 50%; flex: none;
+    background: radial-gradient(circle at 35% 30%, #fbe39a, var(--gold) 45%, var(--gold-deep) 100%);
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,.25), 0 0 0 3px #2b2210;
+    display: grid; place-items: center;
+    font-family: var(--font-display); font-weight: 700; color: #4a3608; font-size: 20px;
+  }
+  h1 { font-family: var(--font-display); font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0; letter-spacing: .02em; line-height: 1.1; }
+  .tagline { margin: 4px 0 0; color: var(--muted); font-size: .95rem; }
+
+  /* Layout */
+  .layout { display: grid; gap: 22px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 1000px) { .layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: start; } .col-right { position: sticky; top: 18px; } }
+
+  .panel { background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius-lg); padding: 20px; }
+  .panel + .panel { margin-top: 22px; }
+  .panel h2 { font-size: 1.15rem; margin: 0 0 4px; font-weight: 700; }
+  .panel .hint { color: var(--muted); font-size: .9rem; margin: 0 0 14px; }
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .count { color: var(--muted); font-size: .9rem; }
+
+  textarea {
+    width: 100%; min-height: 190px; resize: vertical;
+    background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 12px 14px; font-family: var(--font-mono); font-size: .82rem; line-height: 1.55;
+  }
+  textarea::placeholder { color: #5b6676; }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  .btn {
+    border: 1px solid var(--line); background: var(--surface-2); color: var(--text);
+    padding: 9px 16px; border-radius: var(--radius); cursor: pointer; font-weight: 600; font-size: .95rem;
+    transition: background .15s, border-color .15s, transform .05s;
+  }
+  .btn:hover { border-color: #3a4b60; background: #243141; }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--gold); border-color: var(--gold); color: #2a1e04; }
+  .btn-primary:hover { background: #f0c565; border-color: #f0c565; }
+  .btn-ghost { background: transparent; border-color: transparent; color: var(--muted); }
+  .btn-ghost:hover { background: var(--surface-2); color: var(--text); border-color: var(--line); }
+  .btn-sm { padding: 6px 11px; font-size: .85rem; }
+
+  .msg { margin-top: 10px; font-size: .9rem; border-radius: var(--radius-sm); padding: 8px 12px; display: none; }
+  .msg.show { display: block; }
+  .msg.err { background: rgba(228,106,116,.12); color: #f2a3aa; border: 1px solid rgba(228,106,116,.3); }
+  .msg.ok { background: rgba(79,199,166,.1); color: #8fe0c9; border: 1px solid rgba(79,199,166,.28); }
+
+  .session { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .session:empty { display: none; }
+  .chip { background: var(--bg-2); border: 1px solid var(--line-soft); border-radius: 99px; padding: 4px 11px; font-size: .82rem; color: var(--muted); }
+  .chip b { color: var(--text); font-weight: 600; }
+
+  /* Members */
+  .members { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .member { background: var(--bg-2); border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+  .m-head { display: flex; align-items: center; gap: 8px; }
+  .m-name { flex: 1; min-width: 0; background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); padding: 4px 6px; font-weight: 700; font-size: 1.02rem; }
+  .m-name:hover { border-color: var(--line); }
+  .m-name:focus { border-color: var(--gold); outline: none; background: var(--surface); }
+  .leader { font-size: .72rem; font-weight: 700; color: var(--gold); border: 1px solid rgba(227,181,79,.4); border-radius: 99px; padding: 1px 8px; }
+  .icon-btn { width: 30px; height: 30px; flex: none; display: grid; place-items: center; border-radius: var(--radius-sm); border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; font-size: .9rem; }
+  .icon-btn:hover { border-color: rgba(228,106,116,.45); color: var(--pay); background: rgba(228,106,116,.08); }
+  .m-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field { display: flex; flex-direction: column; gap: 3px; font-size: .8rem; color: var(--muted); }
+  .field input, .add-row input, .extra-add input {
+    width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    padding: 7px 9px; font-size: .92rem; font-variant-numeric: tabular-nums; color: var(--text);
+  }
+  .field input:focus, .add-row input:focus, .extra-add input:focus { border-color: var(--gold); outline: none; }
+
+  .extras-title { font-size: .8rem; color: var(--muted); display: flex; justify-content: space-between; }
+  .extra { display: flex; align-items: center; gap: 8px; font-size: .88rem; background: var(--surface); border-radius: var(--radius-sm); padding: 4px 4px 4px 9px; }
+  .extra .lbl { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .extra .val { color: var(--pay); }
+  .extra .val.plus { color: var(--recv); }
+  .field input { background: #202b38; }
+  .field-loot input { border-color: rgba(227,181,79,.35); }
+  .orig { font-size: .75rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: center; min-height: 18px; margin-top: 3px; }
+  .orig span { white-space: nowrap; }
+  .orig.changed { color: var(--gold); }
+  .link-btn { background: none; border: 0; padding: 0; color: var(--gold); text-decoration: underline; cursor: pointer; font-size: .75rem; }
+  .group { border-top: 1px dashed var(--line); padding-top: 9px; display: flex; flex-direction: column; gap: 6px; }
+  .extra .icon-btn { width: 24px; height: 24px; font-size: .75rem; }
+  .extra-add { display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 6px; }
+  .extra-add input { padding: 6px 8px; font-size: .85rem; }
+
+  .m-foot { display: flex; justify-content: space-between; align-items: baseline; font-size: .85rem; color: var(--muted); }
+  .m-net { font-size: 1.05rem; font-weight: 700; }
+  .pos { color: var(--recv); }
+  .neg { color: var(--pay); }
+
+  .add-member { margin-top: 16px; border-top: 1px solid var(--line-soft); padding-top: 16px; }
+  .add-member h3 { font-size: .95rem; margin: 0 0 10px; font-weight: 600; }
+  .add-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; gap: 8px; }
+  @media (max-width: 620px) { .add-row { grid-template-columns: 1fr 1fr; } .add-row input:first-child { grid-column: 1 / -1; } .add-row .btn { grid-column: 1 / -1; } }
+
+  .empty { color: var(--muted); text-align: center; padding: 26px 12px; border: 1px dashed var(--line); border-radius: var(--radius); font-size: .95rem; }
+
+  /* Results */
+  .hero-split { display: grid; grid-template-columns: 1.15fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-bottom: 14px; }
+  .hero-split > div { padding: 16px 18px; }
+  .hero-split .share { background: linear-gradient(160deg, rgba(227,181,79,.16), rgba(227,181,79,.04)); border-right: 1px solid var(--line); }
+  .hero-split .k { font-size: .85rem; color: var(--muted); }
+  .hero-split .v { font-size: clamp(1.6rem, 3.6vw, 2.3rem); font-weight: 700; line-height: 1.15; }
+  .hero-split .share .v { color: var(--gold); }
+  .hero-split .sub { font-size: .85rem; color: var(--muted); }
+  @media (max-width: 520px) { .hero-split { grid-template-columns: 1fr; } .hero-split .share { border-right: 0; border-bottom: 1px solid var(--line); } }
+
+  .mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px; }
+  .mini { background: var(--bg-2); border-radius: var(--radius-sm); padding: 9px 12px; }
+  .mini .k { font-size: .78rem; color: var(--muted); }
+  .mini .v { font-weight: 600; }
+
+  .finals { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-bottom: 4px; }
+  .fin { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; background: var(--bg-2); border: 1px solid var(--line-soft); border-radius: var(--radius-sm); padding: 9px 12px; font-size: .92rem; }
+  .fin span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line-soft); border-radius: var(--radius); }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 520px; }
+  th, td { padding: 9px 12px; text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-weight: 600; color: var(--muted); font-size: .8rem; background: var(--bg-2); border-bottom: 1px solid var(--line-soft); }
+  tbody tr + tr td { border-top: 1px solid var(--line-soft); }
+  .status { display: inline-block; font-size: .78rem; font-weight: 700; padding: 2px 9px; border-radius: 99px; }
+  .status.pay { color: var(--pay); background: rgba(228,106,116,.12); }
+  .status.recv { color: var(--recv); background: rgba(79,199,166,.12); }
+  .status.even { color: var(--even); background: rgba(141,151,165,.12); }
+
+  .section-title { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 22px 0 10px; flex-wrap: wrap; }
+  .section-title h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+
+  .transfers { display: grid; gap: 10px; }
+  .tblock { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--bg-2); }
+  .tblock-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line-soft); }
+  .tblock-head .who { font-weight: 700; }
+  .tblock-head .who span { font-weight: 500; color: var(--muted); font-size: .88rem; }
+  .cmd-list { display: flex; flex-direction: column; }
+  .cmd-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+  .cmd-row + .cmd-row { border-top: 1px solid var(--line-soft); }
+  code.cmd { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: .84rem; color: #f3dfa8; overflow-x: auto; white-space: nowrap; }
+  .copy.done { background: rgba(79,199,166,.15); border-color: rgba(79,199,166,.5); color: var(--recv); }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 140%);
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 10px 12px 10px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 12px 30px rgba(0,0,0,.45);
+    transition: transform .25s ease; z-index: 20; max-width: calc(100% - 32px); font-size: .92rem;
+  }
+  .toast.show { transform: translate(-50%, 0); }
+
+  footer.note { color: var(--muted); font-size: .82rem; margin-top: 28px; text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="coin" aria-hidden="true">$</div>
+      <div>
+        <h1>Split Loot</h1>
+        <p class="tagline">Cole o Party Hunt Analyzer, ajuste os gastos e mande os transfers prontos.</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Coluna esquerda -->
+    <div class="col-left">
+      <section class="panel">
+        <h2>Log do Party Hunt Analyzer</h2>
+        <p class="hint">No Tibia, abra o Party Hunt Analyzer, clique em <b>Copy to clipboard</b> e cole aqui.</p>
+        <textarea id="log" spellcheck="false" placeholder="Session data: From 2026-11-02, 20:10:05 to 2026-11-02, 21:42:31
+Session: 01:32h
+Loot Type: Market
+Loot: 4,812,340
+Supplies: 2,192,860
+Balance: 2,619,480
+Draco Ironfist (Leader)
+    Loot: 1,502,110
+    Supplies: 612,450
+    Balance: 889,660
+..."></textarea>
+        <div class="actions">
+          <button class="btn btn-primary" id="btnCalc">Calcular split</button>
+          <button class="btn" id="btnSample">Usar exemplo</button>
+          <button class="btn btn-ghost" id="btnClear">Limpar tudo</button>
+        </div>
+        <div class="msg" id="msg" role="status"></div>
+        <div class="session" id="session"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Membros da party</h2>
+          <span class="count" id="memberCount"></span>
+        </div>
+        <p class="hint">Clique no loot ou nos supplies de qualquer membro para editar. Valores aceitam 150k, 1,5kk ou 1.500.000.</p>
+        <div id="members"></div>
+
+        <form class="add-member" id="addMember" autocomplete="off">
+          <h3>Adicionar membro</h3>
+          <div class="add-row">
+            <input name="name" placeholder="Nome do personagem" required aria-label="Nome">
+            <input name="loot" placeholder="Loot" inputmode="decimal" aria-label="Loot">
+            <input name="supplies" placeholder="Supplies" inputmode="decimal" aria-label="Supplies">
+            <button class="btn" type="submit">Adicionar</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <!-- Coluna direita -->
+    <div class="col-right">
+      <section class="panel" id="results">
+        <h2>Divisão</h2>
+        <p class="hint">Atualiza sozinha a cada alteração.</p>
+        <div id="resultBody"></div>
+      </section>
+    </div>
+  </div>
+
+  <footer class="note">Os comandos usam o formato do NPC do banco: <code>transfer [valor] to [nome]</code>. Sobras de até 1 gp por jogador ficam com quem paga, por arredondamento.<br>Projeto de fã, sem vínculo com a CipSoft GmbH. Tibia é marca registrada da CipSoft.</footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <span id="toastText"></span>
+  <button class="btn btn-sm" id="toastUndo">Desfazer</button>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Estado ----------
+  let uid = 1;
+  const nid = () => uid++;
+  const state = { members: [], meta: null };
+  let lastRemoved = null;
+  let toastTimer = null;
+
+  const $ = (s, r = document) => r.querySelector(s);
+
+  // ---------- Utilidades ----------
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmt = n => Math.round(n || 0).toLocaleString("pt-BR");
+  const signed = n => (n > 0 ? "+" : "") + fmt(n);
+  const sumOf = arr => arr.reduce((a, e) => a + e.value, 0);
+  const effLoot = m => m.loot + sumOf(m.lootAdj);
+  const memberNet = m => effLoot(m) - m.supplies - sumOf(m.extras);
+
+  function short(n) {
+    const a = Math.abs(n), sign = n < 0 ? "-" : "";
+    if (a >= 1e6) return sign + (a / 1e6).toFixed(2).replace(".", ",").replace(/,?0+$/, "") + "kk";
+    if (a >= 1e3) return sign + (a / 1e3).toFixed(1).replace(".", ",").replace(/,?0+$/, "") + "k";
+    return sign + a;
+  }
+
+  // Aceita: 1500000 | 1.500.000 | 1,500,000 | 150k | 1,5kk | 1.5kk | -200k
+  function parseMoney(v) {
+    if (typeof v === "number") return v;
+    let s = String(v || "").trim().toLowerCase().replace(/\s|gp|gold/g, "");
+    if (!s) return 0;
+    const neg = s.startsWith("-");
+    s = s.replace(/^[-+]/, "");
+    const km = s.match(/k+$/);
+    const ks = km ? km[0].length : 0;
+    s = s.replace(/k+$/, "");
+    let num;
+    if (ks) {
+      s = s.replace(/,/g, ".");
+      const parts = s.split(".");
+      if (parts.length > 2) s = parts.slice(0, -1).join("") + "." + parts[parts.length - 1];
+      num = parseFloat(s) * Math.pow(1000, ks);
+    } else {
+      num = parseInt(s.replace(/[^\d]/g, ""), 10);
+    }
+    if (!isFinite(num)) return 0;
+    return Math.round(neg ? -num : num);
+  }
+
+  const parseLogNum = s => {
+    const t = String(s).trim();
+    const neg = /^-/.test(t);
+    const d = t.replace(/[^\d]/g, "");
+    return d ? (neg ? -1 : 1) * parseInt(d, 10) : 0;
+  };
+
+  // ---------- Parser do Party Hunt Analyzer ----------
+  function parseLog(text) {
+    const lines = text.split(/\r?\n/);
+    const totals = {};
+    const meta = {};
+    const members = [];
+    let cur = null;
+    const statKeys = ["loot", "supplies", "balance", "damage", "healing"];
+
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+      const m = line.match(/^([A-Za-z][A-Za-z ]*?)\s*:\s*(.*)$/);
+      if (m) {
+        const key = m[1].trim().toLowerCase();
+        const val = m[2].trim();
+        if (key === "session data") { meta.range = val.replace(/^from\s+/i, ""); continue; }
+        if (key === "session") { meta.duration = val; continue; }
+        if (key === "loot type") { meta.lootType = val; continue; }
+        if (statKeys.includes(key)) { (cur || totals)[key] = parseLogNum(val); continue; }
+        continue; // chave desconhecida: ignora
+      }
+      // Qualquer linha que não é "Chave: valor" é o nome de um jogador
+      const leader = /\(leader\)/i.test(line);
+      const name = line.replace(/\s*\(leader\)\s*/i, "").trim();
+      if (!name) continue;
+      cur = { id: nid(), name, leader, loot: 0, supplies: 0, damage: 0, healing: 0, extras: [], lootAdj: [] };
+      members.push(cur);
+    }
+    members.forEach(p => { p.loot = p.loot || 0; p.lootOrig = p.loot; p.supplies = p.supplies || 0; delete p.balance; });
+    return { members, totals, meta };
+  }
+
+  // ---------- Cálculo ----------
+  function compute() {
+    const rows = state.members.map(m => {
+      const extra = sumOf(m.extras);
+      const adj = sumOf(m.lootAdj);
+      const loot = m.loot + adj;
+      const spent = m.supplies + extra;
+      return { m, extra, adj, loot, spent, net: loot - spent };
+    });
+    const n = rows.length;
+    const totalLoot = rows.reduce((a, r) => a + r.loot, 0);
+    const totalSpent = rows.reduce((a, r) => a + r.spent, 0);
+    const totalExtra = rows.reduce((a, r) => a + r.extra, 0);
+    const total = totalLoot - totalSpent;
+    const share = n ? Math.floor(total / n) : 0;
+    rows.forEach(r => { r.diff = r.net - share; r.paid = 0; r.received = 0; });
+
+    // Liquidação gulosa: maiores pagadores com maiores recebedores (menos transfers)
+    const payers = rows.filter(r => r.diff > 0).map(r => ({ r, left: r.diff })).sort((a, b) => b.left - a.left);
+    const recv = rows.filter(r => r.diff < 0).map(r => ({ r, left: -r.diff })).sort((a, b) => b.left - a.left);
+    const transfers = [];
+    let i = 0, j = 0;
+    while (i < payers.length && j < recv.length) {
+      const amt = Math.min(payers[i].left, recv[j].left);
+      if (amt > 0) {
+        transfers.push({ from: payers[i].r, to: recv[j].r, amount: amt });
+        payers[i].r.paid += amt;
+        recv[j].r.received += amt;
+      }
+      payers[i].left -= amt;
+      recv[j].left -= amt;
+      if (payers[i].left <= 0) i++;
+      if (recv[j].left <= 0) j++;
+    }
+    rows.forEach(r => { r.final = r.net - r.paid + r.received; });
+    return { rows, n, totalLoot, totalSpent, totalExtra, total, share, transfers };
+  }
+
+  // ---------- Render: membros ----------
+  function renderMembers() {
+    const box = $("#members");
+    $("#memberCount").textContent = state.members.length ? `${state.members.length} jogador${state.members.length > 1 ? "es" : ""}` : "";
+    if (!state.members.length) {
+      box.innerHTML = `<div class="empty">Nenhum membro ainda. Cole o log e clique em <b>Calcular split</b>, ou adicione alguém manualmente abaixo.</div>`;
+      return;
+    }
+    box.innerHTML = `<div class="members">${state.members.map(memberCard).join("")}</div>`;
+    updateNets();
+  }
+
+  function memberCard(m) {
+    const item = (e, kind) => `
+      <div class="extra" data-eid="${e.id}" data-kind="${kind}">
+        <span class="lbl" title="${esc(e.label)}">${esc(e.label)}</span>
+        <span class="val num ${e.value > 0 && kind === "lootAdj" ? "plus" : ""}">${kind === "extras" ? "−" + fmt(e.value) : signed(e.value)}</span>
+        <button type="button" class="icon-btn" data-act="del-extra" aria-label="Remover ${esc(e.label)}">✕</button>
+      </div>`;
+    const extras = m.extras.map(e => item(e, "extras")).join("");
+    return `
+    <article class="member" data-id="${m.id}">
+      <div class="m-head">
+        <input class="m-name" data-field="name" value="${esc(m.name)}" aria-label="Nome do jogador">
+        ${m.leader ? `<span class="leader" title="Líder da party">Líder</span>` : ""}
+        <button type="button" class="icon-btn" data-act="remove" aria-label="Remover ${esc(m.name)} da party" title="Remover da party">✕</button>
+      </div>
+      <div class="m-fields">
+        <div>
+          <label class="field field-loot">Loot (editável)<input data-field="loot" inputmode="decimal" value="${fmt(m.loot)}" title="Clique para editar o loot"></label>
+          <div class="orig" data-orig></div>
+        </div>
+        <label class="field">Supplies<input data-field="supplies" inputmode="decimal" value="${fmt(m.supplies)}"></label>
+      </div>
+      <div class="group">
+        <div class="extras-title"><span>Gastos extras</span><span class="num">${m.extras.length ? "−" + fmt(sumOf(m.extras)) : ""}</span></div>
+        ${extras}
+        <form class="extra-add" data-act="add-extra" data-kind="extras" autocomplete="off">
+          <input name="label" placeholder="SD, imbuement, pots…" aria-label="Descrição do gasto">
+          <input name="value" placeholder="Valor" inputmode="decimal" aria-label="Valor do gasto" required>
+          <button class="btn btn-sm" type="submit">Somar</button>
+        </form>
+      </div>
+      <div class="m-foot"><span>Saldo individual</span><strong class="m-net num"></strong></div>
+    </article>`;
+  }
+
+  function updateNets() {
+    state.members.forEach(m => {
+      const el = document.querySelector(`.member[data-id="${m.id}"] .m-net`);
+      if (!el) return;
+      const net = memberNet(m);
+      const orig = el.closest(".member").querySelector("[data-orig]");
+      if (orig) {
+        if (m.lootOrig != null && m.loot !== m.lootOrig) {
+          orig.className = "orig changed";
+          orig.innerHTML = `<span>No log: ${fmt(m.lootOrig)}</span> <button type="button" class="link-btn" data-act="reset-loot">Restaurar</button>`;
+        } else {
+          orig.className = "orig";
+          orig.textContent = "";
+        }
+      }
+      el.textContent = signed(net) + " gp";
+      el.className = "m-net num " + (net >= 0 ? "pos" : "neg");
+    });
+  }
+
+  // ---------- Render: resultados ----------
+  function renderResults() {
+    const box = $("#resultBody");
+    if (!state.members.length) {
+      box.innerHTML = `<div class="empty">A divisão aparece aqui assim que houver membros na party.</div>`;
+      return;
+    }
+    const c = compute();
+    const profit = c.total >= 0;
+
+    const statusOf = r => r.paid > 0 ? ["pay", "Pagador"] : r.received > 0 ? ["recv", "Recebedor"] : ["even", "Quite"];
+
+    const rowsHtml = c.rows.map(r => {
+      const [cls, label] = statusOf(r);
+      const move = r.paid > 0 ? `−${fmt(r.paid)}` : r.received > 0 ? `+${fmt(r.received)}` : "0";
+      return `<tr>
+        <td><b>${esc(r.m.name)}</b></td>
+        <td class="num">${fmt(r.loot)}${r.adj ? ` <span style="color:var(--muted);font-size:.78rem">(${r.adj > 0 ? "+" : ""}${short(r.adj)})</span>` : ""}</td>
+        <td class="num">${fmt(r.spent)}${r.extra ? ` <span style="color:var(--muted);font-size:.78rem">(+${short(r.extra)})</span>` : ""}</td>
+        <td class="num ${r.net >= 0 ? "pos" : "neg"}">${signed(r.net)}</td>
+        <td class="num">${move}</td>
+        <td class="num final ${r.final >= 0 ? "pos" : "neg"}"><b>${signed(r.final)}</b></td>
+        <td><span class="status ${cls}">${label}</span></td>
+      </tr>`;
+    }).join("");
+
+    // Agrupar transfers por pagador
+    const groups = [];
+    c.transfers.forEach(t => {
+      let g = groups.find(x => x.from === t.from);
+      if (!g) { g = { from: t.from, items: [] }; groups.push(g); }
+      g.items.push(t);
+    });
+
+    const blocks = groups.length ? groups.map((g, idx) => {
+      const sum = g.items.reduce((a, t) => a + t.amount, 0);
+      return `<div class="tblock">
+        <div class="tblock-head">
+          <div class="who">${esc(g.from.m.name)} <span>paga ${fmt(sum)} gp</span></div>
+          <button class="btn btn-sm btn-ghost copy" data-copy="${idx}">Copiar bloco</button>
+        </div>
+        <div class="cmd-list">${g.items.map((t, k) => `
+          <div class="cmd-row">
+            <code class="cmd">transfer ${t.amount} to ${esc(t.to.m.name)}</code>
+            <button class="btn btn-sm copy" data-copy="${idx}-${k}" aria-label="Copiar transferência para ${esc(t.to.m.name)}">Copiar</button>
+          </div>`).join("")}
+        </div>
+      </div>`;
+    }).join("") : `<div class="empty">Ninguém precisa transferir nada: os saldos já estão iguais.</div>`;
+
+    box.innerHTML = `
+      <div class="hero-split">
+        <div class="share">
+          <div class="k">Parte por jogador</div>
+          <div class="v num">${fmt(c.share)} gp</div>
+          <div class="sub">${short(c.share)} para cada um dos ${c.n}</div>
+        </div>
+        <div>
+          <div class="k">${profit ? "Lucro líquido total" : "Prejuízo total"}</div>
+          <div class="v num ${profit ? "pos" : "neg"}">${signed(c.total)}</div>
+          <div class="sub">${short(c.total)} gp</div>
+        </div>
+      </div>
+      <div class="mini-stats">
+        <div class="mini"><div class="k">Loot total</div><div class="v num">${fmt(c.totalLoot)}</div></div>
+        <div class="mini"><div class="k">Gasto total</div><div class="v num">${fmt(c.totalSpent)}</div></div>
+        <div class="mini"><div class="k">Gastos extras</div><div class="v num">${fmt(c.totalExtra)}</div></div>
+      </div>
+
+      <div class="section-title" style="margin-top:4px"><h3>Resumo individual</h3></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Jogador</th><th>Loot</th><th>Gasto</th><th>Saldo</th><th>Transfere</th><th>Fica com</th><th>Status</th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+
+      <div class="section-title">
+        <h3>Comandos de transferência</h3>
+        ${groups.length ? `<button class="btn btn-sm copy" data-copy="all">Copiar resumo para o Discord</button>` : ""}
+      </div>
+      <div class="transfers">${blocks}</div>
+    `;
+
+    // Guarda textos para cópia
+    box._copy = {};
+    const title = splitTitle(c).join("\n");
+    groups.forEach((g, idx) => {
+      box._copy[idx] = `${title}\n\n${payerBlock(g)}`;
+      g.items.forEach((t, k) => { box._copy[`${idx}-${k}`] = cmdOf(t); });
+    });
+    box._copy.all = discordSummary(c, groups);
+  }
+
+  const cmdOf = t => `transfer ${t.amount} to ${t.to.m.name}`;
+
+  function splitTitle(c) {
+    const dur = state.meta && state.meta.duration ? ` (${state.meta.duration})` : "";
+    return [
+      `**Split Loot${dur}**`,
+      `${c.total >= 0 ? "Lucro" : "Prejuízo"}: ${fmt(c.total)} gp`,
+      `Por jogador: ${fmt(c.share)} gp (${c.n} jogadores)`
+    ];
+  }
+
+  // Nome do pagador em negrito; cada transferência no próprio bloco de código
+  // (no Discord, cada bloco ganha o botão de copiar individual)
+  function payerBlock(g) {
+    const sum = g.items.reduce((a, t) => a + t.amount, 0);
+    const cmds = g.items.map(t => "```\n" + cmdOf(t) + "\n```").join("\n");
+    return `**${g.from.m.name} paga ${fmt(sum)} gp:**\n${cmds}`;
+  }
+
+  function discordSummary(c, groups) {
+    return [
+      splitTitle(c).join("\n"),
+      `**Transferências**`,
+      groups.map(payerBlock).join("\n\n")
+    ].join("\n\n");
+  }
+
+  const renderAll = () => { renderMembers(); renderResults(); };
+
+  // ---------- Mensagens ----------
+  function showMsg(text, type) {
+    const el = $("#msg");
+    el.textContent = text;
+    el.className = "msg show " + type;
+  }
+  function hideMsg() { $("#msg").className = "msg"; }
+
+  function renderSession() {
+    const s = $("#session");
+    const mt = state.meta;
+    if (!mt) { s.innerHTML = ""; return; }
+    const chips = [];
+    if (mt.duration) chips.push(`Duração <b>${esc(mt.duration)}</b>`);
+    if (mt.lootType) chips.push(`Loot type <b>${esc(mt.lootType)}</b>`);
+    if (mt.totals && mt.totals.balance != null) chips.push(`Balance no log <b>${fmt(mt.totals.balance)}</b>`);
+    s.innerHTML = chips.map(c => `<span class="chip">${c}</span>`).join("");
+  }
+
+  // ---------- Cópia ----------
+  async function copyText(text, btn) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch {}
+      ta.remove();
+    }
+    if (btn) {
+      const old = btn.textContent;
+      btn.textContent = "Copiado";
+      btn.classList.add("done");
+      setTimeout(() => { btn.textContent = old; btn.classList.remove("done"); }, 1400);
+    }
+  }
+
+  // ---------- Toast (desfazer remoção) ----------
+  function showToast(text) {
+    $("#toastText").textContent = text;
+    $("#toast").classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { $("#toast").classList.remove("show"); lastRemoved = null; }, 6000);
+  }
+
+  // ---------- Eventos ----------
+  $("#btnCalc").addEventListener("click", () => {
+    const text = $("#log").value.trim();
+    if (!text) {
+      if (state.members.length) { renderResults(); showMsg("Divisão recalculada com os membros atuais.", "ok"); }
+      else showMsg("Cole o texto do Party Hunt Analyzer ou adicione membros manualmente.", "err");
+      return;
+    }
+    const res = parseLog(text);
+    if (!res.members.length) {
+      showMsg("Nenhum jogador encontrado. Copie o log pelo botão “Copy to clipboard” do Party Hunt Analyzer e cole o texto completo.", "err");
+      return;
+    }
+    state.members = res.members;
+    state.meta = { ...res.meta, totals: res.totals };
+    const sumBal = res.members.reduce((a, m) => a + m.loot - m.supplies, 0);
+    if (res.totals.balance != null && res.totals.balance !== sumBal) {
+      showMsg(`${res.members.length} jogadores lidos. Atenção: a soma individual (${fmt(sumBal)}) difere do balance total do log (${fmt(res.totals.balance)}). O cálculo usa os valores individuais.`, "err");
+    } else {
+      showMsg(`${res.members.length} jogadores lidos do log.`, "ok");
+    }
+    renderSession();
+    renderAll();
+    if (window.innerWidth < 1000) $("#results").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  $("#btnSample").addEventListener("click", () => {
+    $("#log").value = SAMPLE;
+    $("#btnCalc").click();
+  });
+
+  $("#btnClear").addEventListener("click", () => {
+    $("#log").value = "";
+    state.members = [];
+    state.meta = null;
+    hideMsg();
+    renderSession();
+    renderAll();
+  });
+
+  const membersBox = $("#members");
+
+  membersBox.addEventListener("input", e => {
+    const inp = e.target;
+    const field = inp.dataset.field;
+    if (!field) return;
+    const card = inp.closest(".member");
+    const m = state.members.find(x => x.id === +card.dataset.id);
+    if (!m) return;
+    if (field === "name") m.name = inp.value.trim() || "Sem nome";
+    else m[field] = parseMoney(inp.value);
+    updateNets();
+    renderResults();
+  });
+
+  membersBox.addEventListener("focusout", e => {
+    const inp = e.target;
+    if (inp.dataset.field === "loot" || inp.dataset.field === "supplies") {
+      const m = state.members.find(x => x.id === +inp.closest(".member").dataset.id);
+      if (m) inp.value = fmt(m[inp.dataset.field]);
+    }
+  });
+
+  membersBox.addEventListener("click", e => {
+    const btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    const card = btn.closest(".member");
+    const idx = state.members.findIndex(x => x.id === +card.dataset.id);
+    if (idx < 0) return;
+    const m = state.members[idx];
+    if (btn.dataset.act === "remove") {
+      lastRemoved = { member: m, index: idx };
+      state.members.splice(idx, 1);
+      renderAll();
+      showToast(`${m.name} removido da party.`);
+    } else if (btn.dataset.act === "del-extra") {
+      const row = btn.closest(".extra");
+      const kind = row.dataset.kind;
+      m[kind] = m[kind].filter(x => x.id !== +row.dataset.eid);
+      renderAll();
+    } else if (btn.dataset.act === "reset-loot") {
+      m.loot = m.lootOrig;
+      card.querySelector('[data-field="loot"]').value = fmt(m.loot);
+      updateNets();
+      renderResults();
+    }
+  });
+
+  membersBox.addEventListener("submit", e => {
+    const form = e.target;
+    if (form.dataset.act !== "add-extra") return;
+    e.preventDefault();
+    const m = state.members.find(x => x.id === +form.closest(".member").dataset.id);
+    const fe = form.elements;
+    const value = parseMoney(fe["value"].value);
+    if (!m || !value) { fe["value"].focus(); return; }
+    const kind = form.dataset.kind === "lootAdj" ? "lootAdj" : "extras";
+    m[kind].push({ id: nid(), label: fe["label"].value.trim() || (kind === "extras" ? "Gasto extra" : "Ajuste de loot"), value: kind === "extras" ? Math.abs(value) : value });
+    renderAll();
+    const again = document.querySelector(`.member[data-id="${m.id}"] .extra-add[data-kind="${kind}"] input[name="label"]`);
+    if (again) again.focus();
+  });
+
+  $("#addMember").addEventListener("submit", e => {
+    e.preventDefault();
+    const f = e.target;
+    const el = f.elements;
+    const name = el["name"].value.trim();
+    if (!name) return;
+    state.members.push({ id: nid(), name, leader: false, loot: parseMoney(el["loot"].value), supplies: parseMoney(el["supplies"].value), extras: [], lootAdj: [] });
+    f.reset();
+    el["name"].focus();
+    renderAll();
+  });
+
+  $("#resultBody").addEventListener("click", e => {
+    const btn = e.target.closest("[data-copy]");
+    if (!btn) return;
+    const text = $("#resultBody")._copy[btn.dataset.copy];
+    if (text) copyText(text, btn);
+  });
+
+  $("#toastUndo").addEventListener("click", () => {
+    if (lastRemoved) {
+      state.members.splice(lastRemoved.index, 0, lastRemoved.member);
+      lastRemoved = null;
+      renderAll();
+    }
+    $("#toast").classList.remove("show");
+  });
+
+  // Ctrl+Enter no textarea calcula
+  $("#log").addEventListener("keydown", e => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); $("#btnCalc").click(); }
+  });
+
+  // ---------- Exemplo ----------
+  const SAMPLE = `Session data: From 2026-11-02, 20:10:05 to 2026-11-02, 21:42:31
+Session: 01:32h
+Loot Type: Market
+Loot: 4,812,340
+Supplies: 2,192,860
+Balance: 2,619,480
+Draco Ironfist (Leader)
+	Loot: 1,502,110
+	Supplies: 612,450
+	Balance: 889,660
+	Damage: 3,104,882
+	Healing: 1,220,410
+Lyra Vex
+	Loot: 1,288,900
+	Supplies: 498,320
+	Balance: 790,580
+	Damage: 5,880,190
+	Healing: 302,115
+Mirel Thorn
+	Loot: 1,105,330
+	Supplies: 380,210
+	Balance: 725,120
+	Damage: 2,410,006
+	Healing: 4,118,733
+Kaos Arrow
+	Loot: 916,000
+	Supplies: 701,880
+	Balance: 214,120
+	Damage: 4,977,345
+	Healing: 410,288`;
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
